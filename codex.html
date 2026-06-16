@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HexID Decoder / Encoder</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --card: #1a1a1a;
+            --red: #ff3333;
+            --red-dark: #cc0000;
+            --text: #eeeeee;
+            --text-muted: #aaaaaa;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(90deg, #ff3333, #ff6666);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+        
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #333;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--red);
+            font-weight: 600;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            background: #111;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--red);
+        }
+        
+        button {
+            background: var(--red);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: #ff5555;
+            transform: translateY(-2px);
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.95rem;
+        }
+        
+        .result {
+            margin-top: 12px;
+            padding: 12px;
+            background: #111;
+            border-radius: 8px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        
+        th {
+            color: var(--red);
+        }
+        
+        .file-info {
+            background: #111;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 0.95rem;
+        }
+        
+        .success { background: #1a3c1a; color: #4ade80; }
+        .error { background: #3c1a1a; color: var(--red); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HEX BB USER_ID_0 TOOL</h1>
+            <p class="subtitle">Декодер / Кодер • Редактор </p>
+            <p class="subtitle">Автор skynet</p>
+        </header>
+
+        <!-- Основные инструменты -->
+        <div class="grid">
+            <!-- Кодирование -->
+            <div class="card">
+                <h2 style="margin-bottom: 16px; color: #ff6666;">Кодирование числа</h2>
+                <label>Число (decimal) без пробелов</label>
+                <input type="number" id="encodeInput" value="91038238" placeholder="Введите число">
+                <button onclick="encodeNumber()" style="margin-top: 12px; width: 100%;">Закодировать в HEX</button>
+                
+                <div class="result" id="encodeResult"></div>
+            </div>
+
+            <!-- Декодирование -->
+            <div class="card">
+                <h2 style="margin-bottom: 16px; color: #ff6666;">Декодирование HEX</h2>
+                <label>HEX данные (с пробелами или без)</label>
+                <textarea id="decodeInput" rows="3" placeholder="03 05 6d 22 1e">03 05 6d 22 1e</textarea>
+                <button onclick="decodeHex()" style="margin-top: 12px; width: 100%;">Декодировать</button>
+                
+                <div class="result" id="decodeResult"></div>
+            </div>
+        </div>
+
+        <!-- Работа с файлом user_id_0 -->
+        <div class="card">
+            <h2 style="margin-bottom: 16px; color: #ff6666;">Редактирование файла user_id_0</h2>
+            
+            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                <button onclick="document.getElementById('fileInput').click()" class="btn-small">
+                    📂 Открыть user_id_0
+                </button>
+                <input type="file" id="fileInput" accept="user_id_0" style="display:none" onchange="loadFile(event)">
+                <button onclick="saveFile()" class="btn-small" id="saveBtn" disabled>
+                    💾 Сохранить изменения
+                </button>
+            </div>
+
+            <div id="fileStatus" class="status"></div>
+            
+            <div id="entriesContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentFileData = null;
+        let currentEntries = [];
+        let currentFileName = "user_id_0";
+
+        // ====================== Основные функции ======================
+        
+        function encodeNumber() {
+            const input = document.getElementById('encodeInput').value.trim();
+           
+            const num = parseInt(input);
+            if (isNaN(num) || num < 0) {
+                alert("Введите корректное положительное число");
+                return;
+            }
+            
+            const tag = 0x03;
+           
+            let bytesNeeded = num === 0 ? 1 : Math.ceil(Math.clz32(num.bitLength) / 8);
+            const data = new Uint8Array(bytesNeeded);
+            
+            let temp = num;
+            for (let i = bytesNeeded - 1; i >= 0; i--) {
+                data[i] = temp & 0xFF;
+                temp >>= 8;
+            }
+            
+            const fullBytes = new Uint8Array([tag, ...data]);
+            const hex = Array.from(fullBytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+            
+            document.getElementById('encodeResult').innerHTML = `
+                <strong>HEX:</strong> <span style="color:#ffaa77">${hex}</span><br>
+                <strong>Байт данных:</strong> ${bytesNeeded}
+            `;
+        }
+
+        function decodeHex() {
+            const input = document.getElementById('decodeInput').value.trim();
+            const clean = input.replace(/\s+/g, '');
+            if (!clean) return;
+            
+            try {
+                const bytes = new Uint8Array(clean.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                
+                if (bytes.length < 2) throw new Error("Слишком короткие данные");
+                if (bytes[0] !== 0x03) console.warn("Тег не 03");
+                
+                const valueBytes = bytes.slice(1);
+                let number = 0;
+                for (let byte of valueBytes) {
+                    number = (number << 8) | byte;
+                }
+                
+                document.getElementById('decodeResult').innerHTML = `
+                    <strong>Результат:</strong> <span style="color:#4ade80; font-size:1.3em">${number.toLocaleString('ru-RU')}</span><br>
+                    <strong>Байт данных:</strong> ${valueBytes.length}
+                `;
+            } catch (e) {
+                document.getElementById('decodeResult').innerHTML = `<span style="color:#ff5555">Ошибка: ${e.message}</span>`;
+            }
+        }
+
+        // ====================== Работа с файлом ======================
+        
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            currentFileName = file.name;
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                currentFileData = new Uint8Array(e.target.result);
+                parseFile();
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function parseFile() {
+            currentEntries = [];
+            const container = document.getElementById('entriesContainer');
+            container.innerHTML = '';
+            
+            let offset = 0;
+            let index = 0;
+            
+            while (offset < currentFileData.length) {
+                if (offset + 1 >= currentFileData.length) break;
+                
+                const tag = currentFileData[offset];
+                if (tag !== 0x03) {
+                    offset++;
+                    continue;
+                }
+                
+                // Находим длину значения (идём до следующего 03 или конца)
+                let valueStart = offset + 1;
+                let valueEnd = valueStart;
+                
+                while (valueEnd < currentFileData.length && currentFileData[valueEnd] !== 0x03) {
+                    valueEnd++;
+                }
+                
+                const valueBytes = currentFileData.slice(valueStart, valueEnd);
+                let number = 0;
+                for (let b of valueBytes) {
+                    number = (number << 8) | b;
+                }
+                
+                currentEntries.push({
+                    index: index++,
+                    offset: offset,
+                    value: number,
+                    valueBytes: Array.from(valueBytes),
+                    length: valueBytes.length
+                });
+                
+                offset = valueEnd;
+            }
+            
+            renderEntries();
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('fileStatus').innerHTML = 
+                `<span class="success">Файл загружен: ${currentFileName} | Найдено полей: ${currentEntries.length}</span>`;
+        }
+
+        function renderEntries() {
+            const container = document.getElementById('entriesContainer');
+            let html = `<h3 style="margin-bottom:12px">Найденные поля (тег 03)</h3>`;
+            
+            if (currentEntries.length === 0) {
+                html += `<p style="color:#888">Не найдено полей с тегом 0x03</p>`;
+            } else {
+                html += `<table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Значение (dec)</th>
+                            <th>HEX</th>
+                            <th>Байт</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                
+                currentEntries.forEach((entry, i) => {
+                    const hex = entry.valueBytes.map(b => b.toString(16).padStart(2,'0')).join(' ');
+                    html += `
+                        <tr>
+                            <td>${i+1}</td>
+                            <td><input type="number" value="${entry.value}" id="val_${i}" style="width:180px"></td>
+                            <td style="font-family:monospace; font-size:0.9em">${hex}</td>
+                            <td>${entry.length}</td>
+                            <td><button class="btn-small" onclick="updateEntry(${i})">Обновить</button></td>
+                        </tr>`;
+                });
+                
+                html += `</tbody></table>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function updateEntry(i) {
+            const newVal = parseInt(document.getElementById(`val_${i}`).value);
+            if (isNaN(newVal) || newVal < 0) {
+                alert("Введите корректное число");
+                return;
+            }
+            
+            // Перекодируем
+            const bytesNeeded = newVal === 0 ? 1 : Math.ceil(newVal.bitLength() / 8);
+            const data = new Uint8Array(bytesNeeded);
+            let temp = newVal;
+            for (let j = bytesNeeded - 1; j >= 0; j--) {
+                data[j] = temp & 0xFF;
+                temp >>= 8;
+            }
+            
+            currentEntries[i].value = newVal;
+            currentEntries[i].valueBytes = Array.from(data);
+            currentEntries[i].length = bytesNeeded;
+            
+            renderEntries();
+        }
+
+        function saveFile() {
+            if (!currentFileData) return;
+            
+            // Создаём новый буфер
+            const newData = new Uint8Array(currentFileData);
+            let offset = 0;
+            
+            for (let entry of currentEntries) {
+                // Находим оригинальную позицию
+                while (offset < newData.length && newData[offset] !== 0x03) offset++;
+                if (offset >= newData.length) break;
+                
+                offset++; // пропускаем тег
+                
+                // Записываем новые байты
+                for (let i = 0; i < entry.valueBytes.length; i++) {
+                    if (offset + i < newData.length) {
+                        newData[offset + i] = entry.valueBytes[i];
+                    }
+                }
+                
+                // Если новая длина меньше старой — заполняем нулями (или можно пропустить)
+                offset += entry.length;
+            }
+            
+            const blob = new Blob([newData], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Инициализация
+        window.onload = () => {
+            encodeNumber(); // пример
+        };
+    </script>
+</body>
+</html>
